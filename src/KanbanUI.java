@@ -11,74 +11,94 @@ import javax.swing.*;
 import javax.swing.border.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.RoundRectangle2D;
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * KanbanUI - Interface gráfica principal da aplicação Kanban.
- *
- * Estrutura para integração com MVC:
- *   - KanbanController  → chamar métodos de controlo (ex: controller.criarTarefa(...))
- *   - KanbanModel       → receber dados (ex: model.getTarefasDaColuna(...))
- *
- * Substituir os comentários "TODO: integrar com Model/Controller"
- * pelos métodos reais quando for integrar com os ficheiros do António.
- */
 public class KanbanUI extends JFrame {
 
-    // ── cores ───────────────────────────────────────────────────────
-    private static final Color BG          = new Color(15,  17,  23);   // fundo geral
-    private static final Color SURFACE     = new Color(22,  26,  35);   // painéis
-    private static final Color SURFACE2    = new Color(30,  35,  48);   // colunas
-    private static final Color BORDER_COL  = new Color(45,  52,  70);   // bordas subtis
-    private static final Color ACCENT      = new Color(99, 179, 237);   // azul-céu
-    private static final Color ACCENT2     = new Color(154, 117, 234);  // violeta
-    private static final Color SUCCESS     = new Color(72,  199, 142);  // verde
-    private static final Color WARN        = new Color(250, 176,  5);   // amarelo
-    private static final Color DANGER      = new Color(240,  62,  62);  // vermelho
-    private static final Color TEXT_PRI    = new Color(237, 242, 247);  // texto principal
-    private static final Color TEXT_SEC    = new Color(113, 128, 150);  // texto secundário
-    private static final Color CARD_BG     = new Color(28,  33,  45);   // card background
-    private static final Color TAG_BLUE    = new Color(20,  60, 100);
-    private static final Color TAG_PURPLE  = new Color(60,  30,  90);
-    private static final Color TAG_GREEN   = new Color(20,  70,  50);
+    // ── Paleta de cores ───────────────────────────────────────────────────────
+    private static final Color BG           = new Color(15,  17,  23);
+    private static final Color SURFACE      = new Color(22,  26,  35);
+    private static final Color SURFACE2     = new Color(30,  35,  48);
+    private static final Color BORDER_COL   = new Color(45,  52,  70);
+    private static final Color ACCENT       = new Color(99, 179, 237);
+    private static final Color SUCCESS      = new Color(72,  199, 142);
+    private static final Color WARN         = new Color(250, 176,   5);
+    private static final Color DANGER       = new Color(240,  62,  62);
+    private static final Color TEXT_PRI     = new Color(237, 242, 247);
+    private static final Color TEXT_SEC     = new Color(113, 128, 150);
+    private static final Color CARD_BG      = new Color(28,  33,  45);
+    private static final Color TAG_BLUE     = new Color(20,  60, 100);
+    private static final Color TAG_GREEN    = new Color(20,  70,  50);
 
-    // ── Tipos de Letra ────────────────────────────────────────────────────────────
-    private static final Font FONT_TITLE   = new Font("Segoe UI", Font.BOLD,   22);
-    private static final Font FONT_COL     = new Font("Segoe UI", Font.BOLD,   13);
-    private static final Font FONT_CARD    = new Font("Segoe UI", Font.PLAIN,  13);
-    private static final Font FONT_CARD_B  = new Font("Segoe UI", Font.BOLD,   13);
-    private static final Font FONT_SMALL   = new Font("Segoe UI", Font.PLAIN,  11);
-    private static final Font FONT_BTN     = new Font("Segoe UI", Font.BOLD,   12);
-    private static final Font FONT_TAG     = new Font("Segoe UI", Font.BOLD,   10);
-    private static final Font FONT_COUNT   = new Font("Segoe UI", Font.BOLD,   11);
+    // ── Tipografia ────────────────────────────────────────────────────────────
+    private static final Font FONT_TITLE  = new Font("Segoe UI", Font.BOLD,  22);
+    private static final Font FONT_COL    = new Font("Segoe UI", Font.BOLD,  13);
+    private static final Font FONT_CARD   = new Font("Segoe UI", Font.PLAIN, 13);
+    private static final Font FONT_CARD_B = new Font("Segoe UI", Font.BOLD,  13);
+    private static final Font FONT_SMALL  = new Font("Segoe UI", Font.PLAIN, 11);
+    private static final Font FONT_BTN    = new Font("Segoe UI", Font.BOLD,  12);
+    private static final Font FONT_TAG    = new Font("Segoe UI", Font.BOLD,  10);
+    private static final Font FONT_COUNT  = new Font("Segoe UI", Font.BOLD,  11);
 
-    // ── Colunas ─────────────────────────────────────────
+    // ── Controller ────────────────────────────────────────────────────────────
+    private final KanbanController controller;
+
+    // ── Colunas ───────────────────────────────────────────────────────────────
     private JPanel colunaAFazer;
     private JPanel colunaEmProgresso;
     private JPanel colunaConcluido;
 
-    // Contadores de tarefas por coluna
     private JLabel lblCountAFazer;
     private JLabel lblCountEmProgresso;
     private JLabel lblCountConcluido;
 
-    // Label do projeto ativo (substituir pela lista real quando integrar)
     private JLabel lblProjetoAtivo;
-    private String projetoAtivo = "Projeto Alpha";   // TODO: vem do Model
+    private String projetoAtivo = "Projeto Alpha";
+
+    // Referência ao botão de projeto atualmente selecionado
+    private JButton btnProjetoAtualSelecionado;
+
+    // Dados de demo por projeto: cada entrada é { titulo, descricao, responsavel, coluna(0/1/2) }
+    private static final Object[][][] DEMO = {
+        // Projeto Alpha
+        {
+            {"Definir estrutura MVC",    "Separar Model, View e Controller",      "Ana Silva",   0},
+            {"Criar testes unitários",   "JUnit para as classes do Model",         "Pedro Nunes", 0},
+            {"Interface KanbanUI",       "Swing com dark theme profissional",      "Joao Costa",  1},
+            {"IODataLibrary",            "Leitura e escrita em ficheiro .txt",     "Ana Silva",   1},
+            {"Planeamento do projeto",   "Distribuicao de tarefas e prazos",       "Joao Costa",  2},
+            {"Diagrama de classes UML",  "Modelacao das entidades principais",     "Pedro Nunes", 2},
+        },
+        // Projeto Beta
+        {
+            {"Modulo de autenticacao",   "Login e registo de utilizadores",        "Maria Sousa", 0},
+            {"Base de dados SQLite",     "Configurar schema e conexao",            "Rui Faria",   0},
+            {"API REST endpoints",       "CRUD para recursos principais",          "Maria Sousa", 1},
+            {"Dashboard de metricas",    "Graficos e estatisticas em tempo real",  "Rui Faria",   2},
+            {"Documentacao tecnica",     "Swagger e README completo",              "Maria Sousa", 2},
+        },
+        // Projeto Gama
+        {
+            {"Wireframes UI/UX",         "Mockups de todas as ecras da app",       "Ines Lopes",  0},
+            {"Notificacoes push",        "Integrar Firebase Cloud Messaging",      "Tiago Reis",  0},
+            {"Testes de integracao",     "Cenarios end-to-end com Selenium",       "Ines Lopes",  1},
+            {"Otimizacao de queries",    "Indices e cache para queries lentas",    "Tiago Reis",  1},
+            {"Deploy em producao",       "Pipeline CI/CD com GitHub Actions",      "Ines Lopes",  2},
+        }
+    };
+    private static final String[] NOMES_PROJETOS = {"Projeto Alpha", "Projeto Beta", "Projeto Gama"};
 
     // ── Construtor ────────────────────────────────────────────────────────────
-    public KanbanUI() {
+    public KanbanUI(KanbanController controller) {
+        this.controller = controller;
         configurarJanela();
         construirUI();
-        carregarDadosIniciais(); // TODO: integrar com Model
+        carregarDemoParaProjeto(0); // começa no Projeto Alpha
         setVisible(true);
     }
 
-    // ── Configuração da janela ────────────────────────────────────────────────
     private void configurarJanela() {
-        setTitle("Kanban — Gestão de Projetos");
+        setTitle("Kanban — Gestao de Projetos");
         setSize(1200, 720);
         setMinimumSize(new Dimension(900, 600));
         setDefaultCloseOperation(EXIT_ON_CLOSE);
@@ -87,7 +107,6 @@ public class KanbanUI extends JFrame {
         setLayout(new BorderLayout(0, 0));
     }
 
-    // ── Construção principal ──────────────────────────────────────────────────
     private void construirUI() {
         add(construirTopBar(),  BorderLayout.NORTH);
         add(construirSidebar(), BorderLayout.WEST);
@@ -101,13 +120,17 @@ public class KanbanUI extends JFrame {
         JPanel bar = new JPanel(new BorderLayout());
         bar.setBackground(SURFACE);
         bar.setPreferredSize(new Dimension(0, 58));
-        bar.setBorder(new MatteBorder(0, 0, 1, 0, BORDER_COL));
+        bar.setBorder(new CompoundBorder(
+                new MatteBorder(0, 0, 1, 0, BORDER_COL),
+                new EmptyBorder(0, 0, 0, 0)
+        ));
 
-        // Esquerda: logo + nome projeto
         JPanel esquerda = new JPanel(new FlowLayout(FlowLayout.LEFT, 18, 0));
         esquerda.setOpaque(false);
+        esquerda.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
 
-        JLabel logo = new JLabel("⬡ KanbanApp");
+        // Sem icone — apenas texto
+        JLabel logo = new JLabel("KanbanApp");
         logo.setFont(FONT_TITLE);
         logo.setForeground(ACCENT);
 
@@ -122,34 +145,16 @@ public class KanbanUI extends JFrame {
         esquerda.add(logo);
         esquerda.add(sep);
         esquerda.add(lblProjetoAtivo);
-        esquerda.setBorder(BorderFactory.createEmptyBorder(0, 8, 0, 0));
 
-        // Centro: vertically centered
-        JPanel centro = new JPanel(new GridBagLayout());
-        centro.setOpaque(false);
-
-        // Direita: botão guardar
         JPanel direita = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 0));
         direita.setOpaque(false);
-        JButton btnGuardar = criarBotaoIcon("💾 Guardar", SURFACE2, TEXT_PRI);
+        direita.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 12));
+        JButton btnGuardar = criarBotaoIcon("Guardar", SURFACE2, TEXT_PRI);
         btnGuardar.addActionListener(e -> guardarProjeto());
         direita.add(btnGuardar);
-        direita.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 12));
 
         bar.add(esquerda, BorderLayout.WEST);
-        bar.add(centro,   BorderLayout.CENTER);
         bar.add(direita,  BorderLayout.EAST);
-
-        // Centrar verticalmente
-        esquerda.setAlignmentY(Component.CENTER_ALIGNMENT);
-        for (Component c : esquerda.getComponents()) {
-            if (c instanceof JComponent) ((JComponent) c).setAlignmentY(Component.CENTER_ALIGNMENT);
-        }
-        bar.setBorder(new CompoundBorder(
-                new MatteBorder(0, 0, 1, 0, BORDER_COL),
-                new EmptyBorder(0, 0, 0, 0)
-        ));
-
         return bar;
     }
 
@@ -166,42 +171,42 @@ public class KanbanUI extends JFrame {
                 new EmptyBorder(20, 14, 20, 14)
         ));
 
-        // ---- Secção: Projetos ----
         sb.add(criarSidebarLabel("PROJETOS"));
         sb.add(Box.createVerticalStrut(8));
 
-        // TODO: substituir por lista dinâmica do Model
-        sb.add(criarItemProjeto("Projeto Alpha", true));
+        JButton btnAlpha = criarItemProjeto("Projeto Alpha", true,  0);
+        JButton btnBeta  = criarItemProjeto("Projeto Beta",  false, 1);
+        JButton btnGama  = criarItemProjeto("Projeto Gama",  false, 2);
+        btnProjetoAtualSelecionado = btnAlpha;
+
+        sb.add(btnAlpha);
         sb.add(Box.createVerticalStrut(4));
-        sb.add(criarItemProjeto("Projeto Beta",  false));
+        sb.add(btnBeta);
         sb.add(Box.createVerticalStrut(4));
-        sb.add(criarItemProjeto("Projeto Gama",  false));
+        sb.add(btnGama);
         sb.add(Box.createVerticalStrut(12));
 
-        JButton btnNovoProjeto = criarBotaoSidebar("＋  Novo Projeto");
+        JButton btnNovoProjeto = criarBotaoSidebar("Novo Projeto");
         btnNovoProjeto.addActionListener(e -> criarNovoProjeto());
         sb.add(btnNovoProjeto);
         sb.add(Box.createVerticalStrut(28));
 
-        // ---- Secção: Tarefas ----
-        sb.add(criarSidebarLabel("AÇÕES RÁPIDAS"));
+        sb.add(criarSidebarLabel("ACOES RAPIDAS"));
         sb.add(Box.createVerticalStrut(8));
 
-        JButton btnNovaTarefa = criarBotaoPrimary("＋  Nova Tarefa");
+        JButton btnNovaTarefa = criarBotaoPrimary("Nova Tarefa");
         btnNovaTarefa.addActionListener(e -> criarNovaTarefa());
         btnNovaTarefa.setAlignmentX(Component.LEFT_ALIGNMENT);
         sb.add(btnNovaTarefa);
         sb.add(Box.createVerticalStrut(8));
 
-        JButton btnEquipa = criarBotaoSidebar("👥  Gerir Equipa");
+        JButton btnEquipa = criarBotaoSidebar("Gerir Equipa");
         btnEquipa.addActionListener(e -> gerirEquipa());
         sb.add(btnEquipa);
-        sb.add(Box.createVerticalStrut(8));
 
         sb.add(Box.createVerticalGlue());
 
-        // ---- Rodapé sidebar ----
-        JLabel ver = new JLabel("v1.0  ·  ESTGA / UA");
+        JLabel ver = new JLabel("v1.0  -  ESTGA / UA");
         ver.setFont(FONT_SMALL);
         ver.setForeground(new Color(60, 70, 90));
         ver.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -218,7 +223,7 @@ public class KanbanUI extends JFrame {
         return lbl;
     }
 
-    private JButton criarItemProjeto(String nome, boolean ativo) {
+    private JButton criarItemProjeto(String nome, boolean ativo, int indiceDemo) {
         JButton btn = new JButton(ativo ? "● " + nome : "○ " + nome);
         btn.setFont(FONT_CARD);
         btn.setForeground(ativo ? TEXT_PRI : TEXT_SEC);
@@ -229,46 +234,56 @@ public class KanbanUI extends JFrame {
         btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 32));
         btn.setAlignmentX(Component.LEFT_ALIGNMENT);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        if (ativo) btn.setBorder(new EmptyBorder(4, 8, 4, 8));
-        else       btn.setBorder(new EmptyBorder(4, 8, 4, 8));
+        btn.setBorder(new EmptyBorder(4, 8, 4, 8));
         btn.addActionListener(e -> {
-            projetoAtivo = nome;
-            lblProjetoAtivo.setText(nome);
-            // TODO: controller.selecionarProjeto(nome)
+            selecionarProjeto(btn, nome);
+            carregarDemoParaProjeto(indiceDemo);
         });
         return btn;
     }
 
+    private void selecionarProjeto(JButton btnClicado, String nome) {
+        if (btnProjetoAtualSelecionado != null && btnProjetoAtualSelecionado != btnClicado) {
+            String nomeAntigo = btnProjetoAtualSelecionado.getText().substring(2);
+            btnProjetoAtualSelecionado.setText("○ " + nomeAntigo);
+            btnProjetoAtualSelecionado.setForeground(TEXT_SEC);
+            btnProjetoAtualSelecionado.setBackground(SURFACE);
+        }
+        btnClicado.setText("● " + nome);
+        btnClicado.setForeground(TEXT_PRI);
+        btnClicado.setBackground(SURFACE2);
+        btnProjetoAtualSelecionado = btnClicado;
+
+        projetoAtivo = nome;
+        lblProjetoAtivo.setText(nome);
+    }
+
     // =========================================================================
-    // BOARD (3 colunas)
+    // BOARD
     // =========================================================================
     private JPanel construirBoard() {
         JPanel board = new JPanel(new GridLayout(1, 3, 12, 0));
         board.setBackground(BG);
         board.setBorder(new EmptyBorder(16, 16, 16, 16));
 
-        // Criação das colunas
-        JPanel[] cols = new JPanel[3];
-        JLabel[] counts = new JLabel[3];
+        String[] titulos = {"A Fazer",  "Em Progresso", "Concluido"};
+        Color[]  cores   = {ACCENT,      WARN,           SUCCESS};
 
-        String[] titulos = {"A Fazer", "Em Progresso", "Concluído"};
-        Color[]  cores   = {ACCENT,    WARN,           SUCCESS};
+        JPanel[] cols   = new JPanel[3];
+        JLabel[] counts = new JLabel[3];
 
         for (int i = 0; i < 3; i++) {
             cols[i]   = criarColunaConteudo();
             counts[i] = criarContador(cores[i]);
-        }
-
-        colunaAFazer       = cols[0];
-        colunaEmProgresso  = cols[1];
-        colunaConcluido    = cols[2];
-        lblCountAFazer     = counts[0];
-        lblCountEmProgresso= counts[1];
-        lblCountConcluido  = counts[2];
-
-        for (int i = 0; i < 3; i++) {
             board.add(criarWrapperColuna(titulos[i], cores[i], counts[i], cols[i]));
         }
+
+        colunaAFazer        = cols[0];
+        colunaEmProgresso   = cols[1];
+        colunaConcluido     = cols[2];
+        lblCountAFazer      = counts[0];
+        lblCountEmProgresso = counts[1];
+        lblCountConcluido   = counts[2];
 
         return board;
     }
@@ -292,14 +307,10 @@ public class KanbanUI extends JFrame {
     }
 
     private JPanel criarWrapperColuna(String titulo, Color cor, JLabel contador, JPanel coluna) {
-        JPanel wrapper = new JPanel(new BorderLayout(0, 0));
+        JPanel wrapper = new JPanel(new BorderLayout());
         wrapper.setBackground(SURFACE2);
-        wrapper.setBorder(BorderFactory.createCompoundBorder(
-                new LineBorder(BORDER_COL, 1, true),
-                new EmptyBorder(0, 0, 0, 0)
-        ));
+        wrapper.setBorder(new LineBorder(BORDER_COL, 1, true));
 
-        // Header da coluna
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(SURFACE2);
         header.setBorder(new CompoundBorder(
@@ -307,7 +318,6 @@ public class KanbanUI extends JFrame {
                 new EmptyBorder(12, 14, 12, 14)
         ));
 
-        // Barra de cor lateral
         JPanel stripe = new JPanel();
         stripe.setBackground(cor);
         stripe.setPreferredSize(new Dimension(3, 0));
@@ -324,111 +334,105 @@ public class KanbanUI extends JFrame {
         header.add(stripe,     BorderLayout.WEST);
         header.add(headerLeft, BorderLayout.CENTER);
 
-        // Scroll
         JScrollPane scroll = new JScrollPane(coluna);
         scroll.setBorder(null);
         scroll.setBackground(SURFACE2);
         scroll.getViewport().setBackground(SURFACE2);
         scroll.getVerticalScrollBar().setUnitIncrement(12);
-        scroll.getVerticalScrollBar().setBackground(SURFACE2);
-        // Esconder scrollbar horizontal
         scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
         wrapper.add(header, BorderLayout.NORTH);
         wrapper.add(scroll, BorderLayout.CENTER);
-
         return wrapper;
     }
 
     // =========================================================================
     // CARD DE TAREFA
     // =========================================================================
-    /**
-     * Adiciona um card a uma coluna.
-     *
-     * @param coluna     Painel destino
-     * @param titulo     Texto da tarefa
-     * @param descricao  Descrição curta (pode ser null)
-     * @param tag        Tag/etiqueta (pode ser null)
-     * @param responsavel Membro atribuído (pode ser null)
-     */
-    public void adicionarTarefa(JPanel coluna, String titulo, String descricao,
-                                 String tag, String responsavel) {
+    private void adicionarCardNaUI(JPanel coluna, Tarefa tarefa) {
+        adicionarCardNaUI(coluna, tarefa, "");
+    }
+
+    private void adicionarCardNaUI(JPanel coluna, Tarefa tarefa, String responsavel) {
         JPanel card = new JPanel(new BorderLayout(0, 6));
         card.setBackground(CARD_BG);
         card.setBorder(new CompoundBorder(
                 new LineBorder(BORDER_COL, 1, true),
-                new EmptyBorder(12, 14, 12, 14)
+                new EmptyBorder(12, 14, 10, 14)
         ));
-        card.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
         card.setAlignmentX(Component.LEFT_ALIGNMENT);
         card.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        card.putClientProperty("tarefaId", tarefa.getId());
 
-        // Efeito hover
         card.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) {
-                card.setBackground(new Color(35, 42, 58));
-                card.repaint();
-            }
-            public void mouseExited(MouseEvent e) {
-                card.setBackground(CARD_BG);
-                card.repaint();
-            }
+            public void mouseEntered(MouseEvent e) { card.setBackground(new Color(35, 42, 58)); card.repaint(); }
+            public void mouseExited(MouseEvent e)  { card.setBackground(CARD_BG);               card.repaint(); }
         });
 
-        // Topo: tag (opcional)
-        if (tag != null && !tag.isEmpty()) {
-            JLabel lblTag = criarTag(tag);
-            card.add(lblTag, BorderLayout.NORTH);
-        }
+        JLabel lblTag = criarTagEstado(tarefa.getEstado());
+        card.add(lblTag, BorderLayout.NORTH);
 
-        // Centro: título + descrição
         JPanel centro = new JPanel();
         centro.setLayout(new BoxLayout(centro, BoxLayout.Y_AXIS));
         centro.setOpaque(false);
 
-        JLabel lblTitulo = new JLabel(titulo);
+        JLabel lblTitulo = new JLabel(tarefa.getTitulo());
         lblTitulo.setFont(FONT_CARD_B);
         lblTitulo.setForeground(TEXT_PRI);
         lblTitulo.setAlignmentX(Component.LEFT_ALIGNMENT);
         centro.add(lblTitulo);
 
-        if (descricao != null && !descricao.isEmpty()) {
-            JLabel lblDesc = new JLabel(descricao);
-            lblDesc.setFont(FONT_SMALL);
-            lblDesc.setForeground(TEXT_SEC);
-            lblDesc.setAlignmentX(Component.LEFT_ALIGNMENT);
-            centro.add(Box.createVerticalStrut(3));
-            centro.add(lblDesc);
+        if (tarefa.getDescricao() != null && !tarefa.getDescricao().isEmpty()) {
+            JTextArea areaDesc = new JTextArea(tarefa.getDescricao());
+            areaDesc.setFont(FONT_SMALL);
+            areaDesc.setForeground(TEXT_SEC);
+            areaDesc.setBackground(CARD_BG);
+            areaDesc.setEditable(false);
+            areaDesc.setFocusable(false);
+            areaDesc.setLineWrap(true);
+            areaDesc.setWrapStyleWord(true);
+            areaDesc.setOpaque(false);
+            areaDesc.setAlignmentX(Component.LEFT_ALIGNMENT);
+            centro.add(Box.createVerticalStrut(4));
+            centro.add(areaDesc);
         }
 
         card.add(centro, BorderLayout.CENTER);
 
-        // Rodapé: responsável + botões
         JPanel rodape = new JPanel(new BorderLayout());
         rodape.setOpaque(false);
+        rodape.setBorder(new EmptyBorder(4, 0, 0, 0));
+
+        JPanel infoLeft = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        infoLeft.setOpaque(false);
+
+        JLabel lblId = new JLabel("ID: " + tarefa.getId());
+        lblId.setFont(FONT_SMALL);
+        lblId.setForeground(new Color(70, 85, 110));
+        infoLeft.add(lblId);
 
         if (responsavel != null && !responsavel.isEmpty()) {
-            JLabel lblResp = new JLabel("👤 " + responsavel);
+            JLabel lblResp = new JLabel(responsavel);
             lblResp.setFont(FONT_SMALL);
             lblResp.setForeground(TEXT_SEC);
-            rodape.add(lblResp, BorderLayout.WEST);
+            infoLeft.add(lblResp);
         }
+        rodape.add(infoLeft, BorderLayout.WEST);
 
         JPanel acoes = new JPanel(new FlowLayout(FlowLayout.RIGHT, 4, 0));
         acoes.setOpaque(false);
 
-        JButton btnEditar = criarBotaoIconPequeno("✎", new Color(60, 80, 110), ACCENT);
-        JButton btnMover  = criarBotaoIconPequeno("→", new Color(60, 80, 50), SUCCESS);
-        JButton btnRemover= criarBotaoIconPequeno("✕", new Color(80, 30, 30), DANGER);
+        JButton btnEditar  = criarBotaoIconPequeno("Ed", new Color(60, 80, 110), ACCENT);
+        JButton btnMover   = criarBotaoIconPequeno(">>", new Color(40, 70, 40),  SUCCESS);
+        JButton btnRemover = criarBotaoIconPequeno("X",  new Color(80, 30, 30),  DANGER);
 
-        btnMover.setToolTipText("Mover para a próxima coluna");
         btnEditar.setToolTipText("Editar tarefa");
+        btnMover.setToolTipText("Mover para a proxima coluna");
         btnRemover.setToolTipText("Remover tarefa");
 
-        btnMover.addActionListener(e -> moverTarefa(card));
+        btnEditar.addActionListener(e  -> editarTarefa(card, lblTitulo, lblTag));
+        btnMover.addActionListener(e   -> moverTarefa(card, lblTag));
         btnRemover.addActionListener(e -> removerTarefa(card));
-        btnEditar.addActionListener(e -> editarTarefa(card, lblTitulo));
 
         acoes.add(btnEditar);
         acoes.add(btnMover);
@@ -444,62 +448,73 @@ public class KanbanUI extends JFrame {
         refreshUI();
     }
 
-    private JLabel criarTag(String texto) {
-        JLabel lbl = new JLabel(" " + texto.toUpperCase() + " ");
-        lbl.setFont(FONT_TAG);
-        // Cor da tag baseada no conteúdo
-        if (texto.toLowerCase().contains("bug") || texto.toLowerCase().contains("erro")) {
-            lbl.setForeground(DANGER); lbl.setBackground(new Color(80, 20, 20));
-        } else if (texto.toLowerCase().contains("feature") || texto.toLowerCase().contains("ui")) {
-            lbl.setForeground(ACCENT); lbl.setBackground(TAG_BLUE);
-        } else if (texto.toLowerCase().contains("docs") || texto.toLowerCase().contains("test")) {
-            lbl.setForeground(ACCENT2); lbl.setBackground(TAG_PURPLE);
-        } else {
-            lbl.setForeground(SUCCESS); lbl.setBackground(TAG_GREEN);
+    private JLabel criarTagEstado(EstadoTarefa estado) {
+        String texto;
+        Color fg, bg;
+        switch (estado) {
+            case EM_PROGRESSO -> { texto = "EM PROGRESSO"; fg = WARN;    bg = new Color(80, 60, 10); }
+            case FINALIZADA   -> { texto = "CONCLUIDA";    fg = SUCCESS; bg = TAG_GREEN; }
+            default           -> { texto = "POR FAZER";    fg = ACCENT;  bg = TAG_BLUE; }
         }
+        JLabel lbl = new JLabel(" " + texto + " ");
+        lbl.setFont(FONT_TAG);
+        lbl.setForeground(fg);
+        lbl.setBackground(bg);
         lbl.setOpaque(true);
-        lbl.setBorder(new EmptyBorder(2, 6, 2, 6));
+        lbl.setBorder(new EmptyBorder(2, 6, 4, 6));
         return lbl;
     }
 
     // =========================================================================
-    // AÇÕES DE TAREFAS
+    // ACOES DE TAREFAS
     // =========================================================================
-    private void moverTarefa(JPanel card) {
+    private void moverTarefa(JPanel card, JLabel lblTag) {
+        int id = (int) card.getClientProperty("tarefaId");
         Container parent = card.getParent();
-        // Remover card + espaço a seguir
         int idx = indexDoCard(parent, card);
+
         parent.remove(card);
         if (idx >= 0 && idx < parent.getComponentCount()
                 && parent.getComponent(idx) instanceof Box.Filler) {
             parent.remove(idx);
         }
 
+        EstadoTarefa novoEstado;
         if (parent == colunaAFazer) {
+            novoEstado = EstadoTarefa.EM_PROGRESSO;
             colunaEmProgresso.add(card);
             colunaEmProgresso.add(Box.createVerticalStrut(8));
         } else if (parent == colunaEmProgresso) {
+            novoEstado = EstadoTarefa.FINALIZADA;
             colunaConcluido.add(card);
             colunaConcluido.add(Box.createVerticalStrut(8));
         } else {
+            novoEstado = EstadoTarefa.POR_FAZER;
             colunaAFazer.add(card);
             colunaAFazer.add(Box.createVerticalStrut(8));
         }
 
-        // TODO: controller.moverTarefa(tarefaId, novaColuna)
+        atualizarTagEstado(lblTag, novoEstado);
+        controller.alterarEstadoTarefa(id, novoEstado);
         atualizarContadores();
         refreshUI();
     }
 
+    private void atualizarTagEstado(JLabel lblTag, EstadoTarefa estado) {
+        switch (estado) {
+            case EM_PROGRESSO -> { lblTag.setText(" EM PROGRESSO "); lblTag.setForeground(WARN);    lblTag.setBackground(new Color(80, 60, 10)); }
+            case FINALIZADA   -> { lblTag.setText(" CONCLUIDA ");    lblTag.setForeground(SUCCESS); lblTag.setBackground(TAG_GREEN); }
+            default           -> { lblTag.setText(" POR FAZER ");    lblTag.setForeground(ACCENT);  lblTag.setBackground(TAG_BLUE); }
+        }
+    }
+
     private void removerTarefa(JPanel card) {
         int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "Tens a certeza que queres remover esta tarefa?",
-                "Remover Tarefa",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE
+                this, "Tens a certeza que queres remover esta tarefa?",
+                "Remover Tarefa", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE
         );
         if (confirm == JOptionPane.YES_OPTION) {
+            int id = (int) card.getClientProperty("tarefaId");
             Container parent = card.getParent();
             int idx = indexDoCard(parent, card);
             parent.remove(card);
@@ -507,24 +522,28 @@ public class KanbanUI extends JFrame {
                     && parent.getComponent(idx) instanceof Box.Filler) {
                 parent.remove(idx);
             }
-            // TODO: controller.removerTarefa(tarefaId)
+            controller.removeTarefa(id);
             atualizarContadores();
             refreshUI();
         }
     }
 
-    private void editarTarefa(JPanel card, JLabel lblTitulo) {
-        String novoNome = (String) JOptionPane.showInputDialog(
-                this,
-                "Editar nome da tarefa:",
-                "Editar Tarefa",
-                JOptionPane.PLAIN_MESSAGE,
-                null, null,
-                lblTitulo.getText()
+    private void editarTarefa(JPanel card, JLabel lblTitulo, JLabel lblTag) {
+        JTextField campoNome = new JTextField(lblTitulo.getText(), 20);
+        estilizarCampo(campoNome);
+
+        JPanel painel = new JPanel(new GridLayout(0, 1, 6, 6));
+        painel.setBackground(SURFACE);
+        painel.setBorder(new EmptyBorder(8, 8, 8, 8));
+        painel.add(criarLabelDialogo("Nome da tarefa *"));
+        painel.add(campoNome);
+
+        int result = JOptionPane.showConfirmDialog(
+                this, painel, "Editar Tarefa",
+                JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
         );
-        if (novoNome != null && !novoNome.trim().isEmpty()) {
-            lblTitulo.setText(novoNome.trim());
-            // TODO: controller.editarTarefa(tarefaId, novoNome)
+        if (result == JOptionPane.OK_OPTION && !campoNome.getText().trim().isEmpty()) {
+            lblTitulo.setText(campoNome.getText().trim());
             refreshUI();
         }
     }
@@ -537,17 +556,14 @@ public class KanbanUI extends JFrame {
     }
 
     // =========================================================================
-    // DIÁLOGOS
+    // DIALOGOS
     // =========================================================================
     private void criarNovaTarefa() {
-        JTextField campoNome  = new JTextField(20);
-        JTextField campoDesc  = new JTextField(20);
-        JTextField campoTag   = new JTextField(20);
-        JTextField campoResp  = new JTextField(20);
-
+        JTextField campoNome = new JTextField(20);
+        JTextField campoDesc = new JTextField(20);
+        JTextField campoResp = new JTextField(20);
         estilizarCampo(campoNome);
         estilizarCampo(campoDesc);
-        estilizarCampo(campoTag);
         estilizarCampo(campoResp);
 
         JPanel painel = new JPanel(new GridLayout(0, 1, 6, 6));
@@ -555,32 +571,20 @@ public class KanbanUI extends JFrame {
         painel.setBorder(new EmptyBorder(8, 8, 8, 8));
         painel.add(criarLabelDialogo("Nome da tarefa *"));
         painel.add(campoNome);
-        painel.add(criarLabelDialogo("Descrição (opcional)"));
+        painel.add(criarLabelDialogo("Descricao (opcional)"));
         painel.add(campoDesc);
-        painel.add(criarLabelDialogo("Tag (ex: UI, Bug, Feature)"));
-        painel.add(campoTag);
-        painel.add(criarLabelDialogo("Responsável (opcional)"));
+        painel.add(criarLabelDialogo("Responsavel (opcional)"));
         painel.add(campoResp);
-
-        UIManager.put("OptionPane.background", SURFACE);
-        UIManager.put("Panel.background", SURFACE);
 
         int result = JOptionPane.showConfirmDialog(
                 this, painel, "Nova Tarefa",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE
         );
-
         if (result == JOptionPane.OK_OPTION) {
             String nome = campoNome.getText().trim();
             if (!nome.isEmpty()) {
-                adicionarTarefa(
-                        colunaAFazer,
-                        nome,
-                        campoDesc.getText().trim(),
-                        campoTag.getText().trim(),
-                        campoResp.getText().trim()
-                );
-                // TODO: controller.criarTarefa(nome, desc, tag, responsavel)
+                Tarefa nova = controller.criaTarefa(nome, campoDesc.getText().trim());
+                adicionarCardNaUI(colunaAFazer, nova, campoResp.getText().trim());
             }
         }
     }
@@ -590,23 +594,53 @@ public class KanbanUI extends JFrame {
         if (nome != null && !nome.trim().isEmpty()) {
             projetoAtivo = nome.trim();
             lblProjetoAtivo.setText(projetoAtivo);
-            // TODO: controller.criarProjeto(nome)
-            JOptionPane.showMessageDialog(this, "Projeto \"" + projetoAtivo + "\" criado!", "Projeto Criado", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
     private void gerirEquipa() {
-        // TODO: abrir diálogo de gestão de equipa quando integrar com Model
         JOptionPane.showMessageDialog(this,
-                "Funcionalidade de Gestão de Equipa\n(Integração pendente com o Model)",
+                "Funcionalidade de Gestao de Equipa em desenvolvimento.",
                 "Gerir Equipa", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void guardarProjeto() {
-        // TODO: controller.guardarProjeto()
-        JOptionPane.showMessageDialog(this,
-                "Projeto guardado com sucesso! ✔",
-                "Guardar", JOptionPane.INFORMATION_MESSAGE);
+        // TODO: controller.guardarProjeto() quando IODataLibrary estiver integrada
+        JOptionPane.showMessageDialog(this, "Projeto guardado com sucesso!", "Guardar", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    // =========================================================================
+    // DADOS DE DEMO — diferentes por projeto
+    // =========================================================================
+    private void carregarDemoParaProjeto(int indice) {
+        // Limpar colunas
+        colunaAFazer.removeAll();
+        colunaEmProgresso.removeAll();
+        colunaConcluido.removeAll();
+
+        Object[][] tarefas = DEMO[indice];
+        for (Object[] t : tarefas) {
+            String titulo      = (String)  t[0];
+            String descricao   = (String)  t[1];
+            String responsavel = (String)  t[2];
+            int    colIdx      = (Integer) t[3];
+
+            EstadoTarefa estado = switch (colIdx) {
+                case 1  -> EstadoTarefa.EM_PROGRESSO;
+                case 2  -> EstadoTarefa.FINALIZADA;
+                default -> EstadoTarefa.POR_FAZER;
+            };
+
+            Tarefa nova = controller.criaTarefa(titulo, descricao);
+            controller.alterarEstadoTarefa(nova.getId(), estado);
+
+            JPanel destino = switch (colIdx) {
+                case 1  -> colunaEmProgresso;
+                case 2  -> colunaConcluido;
+                default -> colunaAFazer;
+            };
+
+            adicionarCardNaUI(destino, nova, responsavel);
+        }
     }
 
     // =========================================================================
@@ -623,10 +657,7 @@ public class KanbanUI extends JFrame {
         campo.setBackground(SURFACE2);
         campo.setForeground(TEXT_PRI);
         campo.setCaretColor(ACCENT);
-        campo.setBorder(new CompoundBorder(
-                new LineBorder(BORDER_COL),
-                new EmptyBorder(4, 8, 4, 8)
-        ));
+        campo.setBorder(new CompoundBorder(new LineBorder(BORDER_COL), new EmptyBorder(4, 8, 4, 8)));
         campo.setFont(FONT_CARD);
     }
 
@@ -671,15 +702,15 @@ public class KanbanUI extends JFrame {
         return btn;
     }
 
-    private JButton criarBotaoIconPequeno(String icone, Color bg, Color fg) {
-        JButton btn = new JButton(icone);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 11));
+    private JButton criarBotaoIconPequeno(String texto, Color bg, Color fg) {
+        JButton btn = new JButton(texto);
+        btn.setFont(new Font("Segoe UI", Font.BOLD, 10));
         btn.setBackground(bg);
         btn.setForeground(fg);
         btn.setBorderPainted(false);
         btn.setFocusPainted(false);
         btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        btn.setPreferredSize(new Dimension(26, 22));
+        btn.setPreferredSize(new Dimension(30, 22));
         btn.setBorder(new EmptyBorder(2, 4, 2, 4));
         return btn;
     }
@@ -704,46 +735,21 @@ public class KanbanUI extends JFrame {
     }
 
     // =========================================================================
-    // DADOS INICIAIS DE DEMONSTRAÇÃO
-    // TODO: substituir por carregamento do Model (ficheiro / base de dados)
+    // METODO PUBLICO: carregar tarefas do Model (quando IODataLibrary pronta)
     // =========================================================================
-    private void carregarDadosIniciais() {
-        adicionarTarefa(colunaAFazer,      "Definir estrutura MVC",   "Separar Model, View e Controller",   "Feature",  "Ana Silva");
-        adicionarTarefa(colunaAFazer,      "Criar testes unitários",  "JUnit para classes do Model",         "Docs",     "");
-        adicionarTarefa(colunaEmProgresso, "Interface KanbanUI",      "Swing com design profissional",       "UI",       "João Costa");
-        adicionarTarefa(colunaEmProgresso, "IODataLibrary",           "Leitura e escrita em ficheiro .txt",  "Feature",  "Ana Silva");
-        adicionarTarefa(colunaConcluido,   "Planeamento do projeto",  "Distribuição de tarefas na equipa",   "Docs",     "João Costa");
-    }
-
-    // =========================================================================
-    // INTEGRAÇÃO COM MVC (métodos públicos para o Controller chamar)
-    // =========================================================================
-
-    /** Limpa todas as colunas e recarrega tarefas vindas do Model. */
-    public void recarregarBoard(List<Object[]> tarefas) {
+    public void carregarTarefasDoModel(List<Tarefa> tarefas) {
         colunaAFazer.removeAll();
         colunaEmProgresso.removeAll();
         colunaConcluido.removeAll();
-        for (Object[] t : tarefas) {
-            // t[0]=coluna(0,1,2), t[1]=titulo, t[2]=descricao, t[3]=tag, t[4]=responsavel
-            JPanel destino = switch ((int) t[0]) {
-                case 1  -> colunaEmProgresso;
-                case 2  -> colunaConcluido;
-                default -> colunaAFazer;
+        for (Tarefa t : tarefas) {
+            JPanel destino = switch (t.getEstado()) {
+                case EM_PROGRESSO -> colunaEmProgresso;
+                case FINALIZADA   -> colunaConcluido;
+                default           -> colunaAFazer;
             };
-            adicionarTarefa(destino,
-                    (String) t[1],
-                    t[2] != null ? (String) t[2] : "",
-                    t[3] != null ? (String) t[3] : "",
-                    t[4] != null ? (String) t[4] : "");
+            adicionarCardNaUI(destino, t);
         }
         atualizarContadores();
         refreshUI();
-    }
-
-    /** Atualiza o nome do projeto exibido na top bar. */
-    public void setProjetoAtivo(String nome) {
-        projetoAtivo = nome;
-        lblProjetoAtivo.setText(nome);
     }
 }

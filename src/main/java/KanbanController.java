@@ -6,9 +6,9 @@ public class KanbanController {
         this.model = model;
     }
 
-    public void criaTarefa(String titulo, String descricao) {
-        model.criaTarefa(titulo, descricao);
-    }
+    public Tarefa criaTarefa(String titulo, String descricao) {
+    return model.criaTarefa(titulo, descricao);
+}
 
     public void removeTarefa(int id) {
         model.removeTarefa(id);

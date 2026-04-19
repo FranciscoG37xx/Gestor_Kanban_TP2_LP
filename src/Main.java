@@ -7,8 +7,12 @@
  *
  * @author franc
  */
+import javax.swing.SwingUtilities;
+
 public class Main {
     public static void main(String[] args) {
-        new KanbanUI();
+        QuadroKanban model = new QuadroKanban();
+        KanbanController controller = new KanbanController(model);
+        SwingUtilities.invokeLater(() -> new KanbanUI(controller));
     }
 }
