@@ -1,0 +1,22 @@
+PROJETO|Projeto Alpha
+MEMBRO|Ana Silva|Developer
+MEMBRO|Joao Costa|Designer
+MEMBRO|Pedro Nunes|Tester
+TAREFA|Definir estrutura MVC|Separar Model, View e Controller|Ana Silva|POR_FAZER
+TAREFA|Criar testes unitarios|JUnit para classes do Model|Pedro Nunes|POR_FAZER
+TAREFA|Interface KanbanUI|Swing com dark theme profissional|Joao Costa|EM_PROGRESSO
+TAREFA|IODataLibrary|Leitura e escrita em ficheiro .txt|Ana Silva|EM_PROGRESSO
+TAREFA|Planeamento do projeto|Distribuicao de tarefas e prazos|Joao Costa|FINALIZADA
+TAREFA|Diagrama UML|Modelacao das entidades principais|Pedro Nunes|FINALIZADA
+PROJETO|Projeto Beta
+MEMBRO|Maria Sousa|Developer
+MEMBRO|Rui Faria|DevOps
+TAREFA|Modulo de autenticacao|Login e registo de utilizadores|Maria Sousa|POR_FAZER
+TAREFA|Base de dados SQLite|Configurar schema e conexao|Rui Faria|EM_PROGRESSO
+TAREFA|Dashboard de metricas|Graficos e estatisticas|Maria Sousa|FINALIZADA
+PROJETO|Projeto Gama
+MEMBRO|Ines Lopes|Designer
+MEMBRO|Tiago Reis|Developer
+TAREFA|Wireframes UI/UX|Mockups de todas as ecras|Ines Lopes|POR_FAZER
+TAREFA|Notificacoes push|Integrar Firebase Cloud Messaging|Tiago Reis|EM_PROGRESSO
+TAREFA|Deploy em producao|Pipeline CI/CD com GitHub Actions|Ines Lopes|FINALIZADA

@@ -11,7 +11,7 @@ import javax.swing.SwingUtilities;
 
 public class Main {
     public static void main(String[] args) {
-        QuadroKanban model = new QuadroKanban();
+        QuadroKanban model         = new QuadroKanban();
         KanbanController controller = new KanbanController(model);
         SwingUtilities.invokeLater(() -> new KanbanUI(controller));
     }
